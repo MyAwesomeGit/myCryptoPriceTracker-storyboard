@@ -38,7 +38,7 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
     override func viewDidLoad() {
         super.viewDidLoad()
         crpCcy = ["BTC", "DOGE", "ETH", "PEPE", "SNEK" ,"SHIB"]
-        ccy = ["RUR", "AED", "EUR", "HKD", "JPY", "TRY", "USD"]
+        ccy = ["RUB", "EUR", "HKD", "JPY", "TRY", "USD"]
         
         self.picker.delegate = self
         self.picker.dataSource = self
@@ -52,7 +52,7 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
         getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)])
     }
     
-    
+    // TODO: Add separate Class for getPrice function
     func getPrice (crpCcy: String, ccy: String) {
         if let url = URL(string: "https://min-api.cryptocompare.com/data/price?fsym=\(crpCcy)&tsyms=\(ccy)") {
             URLSession.shared.dataTask(with: url) {(data, response, error) in
@@ -66,6 +66,11 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
                                 let formattedPrice = formatter.string(from: NSNumber(value: price))
                                 self.price.text = formattedPrice
                             }
+                        }
+                    }
+                    else {
+                        DispatchQueue.main.async {
+                            self.price.text = "Currency error"
                         }
                     }
                 } else {

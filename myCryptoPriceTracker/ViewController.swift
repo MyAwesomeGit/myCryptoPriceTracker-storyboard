@@ -31,7 +31,7 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
     @IBOutlet weak var price: UILabel!
     
     @IBAction func refreshButtonTapped(_ sender: Any) {
-        getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)])
+        getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)], onResult: showResult)
     }
     
     
@@ -43,43 +43,42 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
         self.picker.delegate = self
         self.picker.dataSource = self
         
-        getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)])
+        getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)], onResult: showResult)
         
     }
     
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)])
+        getPrice(crpCcy: crpCcy[picker.selectedRow(inComponent: 0)], ccy: ccy[picker.selectedRow(inComponent: 1)], onResult: showResult)
     }
     
-    // TODO: Add separate Class for getPrice function
-    func getPrice (crpCcy: String, ccy: String) {
+    
+    func showResult(result: String) {
+        DispatchQueue.main.async { [self] in
+            price.text = result
+        }
+    }
+    
+    func getPrice(crpCcy: String, ccy: String, onResult: @escaping (String) -> Void) {
         if let url = URL(string: "https://min-api.cryptocompare.com/data/price?fsym=\(crpCcy)&tsyms=\(ccy)") {
             URLSession.shared.dataTask(with: url) {(data, response, error) in
                 if let data = data {
                     if let json = try?JSONSerialization.jsonObject(with: data, options: []) as? [String:Double] {
-                        DispatchQueue.main.async {
-                            if let price = json[ccy] {
-                                let formatter = NumberFormatter()
-                                formatter.currencyCode = ccy
-                                formatter.numberStyle = .currency
-                                let formattedPrice = formatter.string(from: NSNumber(value: price))
-                                self.price.text = formattedPrice
-                            }
+                        if let price = json[ccy] {
+                            let formatter = NumberFormatter()
+                            formatter.currencyCode = ccy
+                            formatter.numberStyle = .currency
+                            let formattedPrice = formatter.string(from: NSNumber(value: price))
+                            onResult(formattedPrice ?? "")
                         }
-                    }
-                    else {
-                        DispatchQueue.main.async {
-                            self.price.text = "Currency error"
-                        }
+                    } else {
+                        onResult("An error occurred. Incorrect currrency")
                     }
                 } else {
-                    DispatchQueue.main.async {
-                        self.price.text = "An error occurred. Press Refresh"
-                    }
+                    onResult("An error occurred. Press Refresh")
                 }
             }.resume()
         }
     }
-    
 }
+
